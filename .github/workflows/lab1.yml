@@ -41,19 +41,53 @@ jobs:
           tar -czf lab1-coverage-html.tar.gz -C build/coverage/report .
       - uses: actions/upload-artifact@v4
         with:
-          name: lab1-distribution
+          name: lab1-linux-and-reports
           path: lab1/*.tar.gz
+          if-no-files-found: error
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            make
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-catch
+      - name: Run tests and build a standalone Windows executable
+        shell: msys2 {0}
+        run: |
+          set -e
+          make -C lab1 EXEEXT=.exe test
+          make -C lab1 EXEEXT=.exe release
+      - name: Run the executable in PowerShell and package it
+        shell: pwsh
+        run: |
+          [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+          $output = @('1', '3', '0', '0') | & .\lab1\build\release\lab1.exe
+          if ($LASTEXITCODE -ne 0 -or -not ($output -match 'длина: 0')) {
+            throw "The Windows executable did not produce the expected menu output."
+          }
+          Compress-Archive -LiteralPath lab1/build/release/lab1.exe -DestinationPath lab1/lab1-windows-x86_64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab1-windows
+          path: lab1/lab1-windows-x86_64.zip
           if-no-files-found: error
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: check
+    needs: [check, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: lab1-distribution
+          pattern: lab1-*
+          merge-multiple: true
           path: distribution
       - name: Publish GitHub release
         env:
@@ -64,8 +98,8 @@ jobs:
         run: |
           tag="lab1-build-${RUN_NUMBER}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" distribution/*.tar.gz --clobber
+            gh release upload "$tag" distribution/*.tar.gz distribution/*.zip --clobber
           else
-            gh release create "$tag" distribution/*.tar.gz --target "$COMMIT_SHA" \
+            gh release create "$tag" distribution/*.tar.gz distribution/*.zip --target "$COMMIT_SHA" \
               --title "Lab 1 C++ (build ${RUN_NUMBER})" --generate-notes
           fi

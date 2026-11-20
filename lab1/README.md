@@ -4,7 +4,28 @@
 
 ## Сборка и запуск
 
-На Ubuntu/Debian установите инструменты. На Windows эти же команды можно выполнить в WSL с Ubuntu. Для обычной сборки достаточно GNU Make и компилятора с поддержкой C++17, остальные пакеты нужны для проверок.
+### Windows x64
+
+Для запуска готовой программы распакуйте `lab1-windows-x86_64.zip` и откройте `lab1.exe` или выполните `.\lab1.exe` в PowerShell из папки распаковки. Установка Linux, WSL, компилятора или IDE для запуска не нужна.
+
+Для сборки из исходников установите [MSYS2](https://www.msys2.org/) и откройте именно терминал **MSYS2 UCRT64**. Перейдите в папку проекта (например, `cd /c/Users/YourName/Downloads/ppois-course`) и выполните:
+
+```bash
+pacman -S --needed make mingw-w64-ucrt-x86_64-gcc
+make -C lab1 release
+./lab1/build/release/lab1.exe
+```
+
+Для тестов добавьте [Catch2](https://packages.msys2.org/packages/mingw-w64-ucrt-x86_64-catch) и `pkgconf` в том же терминале:
+
+```bash
+pacman -S --needed mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-catch
+make -C lab1 test
+```
+
+### Linux
+
+На Ubuntu/Debian установите зависимости и запустите сборку из корня репозитория. Для обычной сборки достаточно GNU Make и компилятора с поддержкой C++17, остальные пакеты нужны для проверок.
 
 ```bash
 sudo apt-get update
@@ -36,17 +57,19 @@ make -C lab1
 
 ## Проверки, документация и готовая сборка
 
+Команды ниже приведены для Linux. На Windows можно собрать программу и запустить тесты нативно по инструкции выше, а отчёт о покрытии, Cppcheck и документацию проверяет Linux-задача в GitHub Actions.
+
 ```bash
 make -C lab1 test       # тесты Catch2
 make -C lab1 coverage   # тесты и контроль покрытия строк > 90%
 make -C lab1 lint       # статический анализ Cppcheck
 make -C lab1 docs       # документация Doxygen
-make -C lab1 release    # статически скомпонованный исполняемый файл для Linux
+make -C lab1 release    # автономный исполняемый файл для текущей платформы
 ```
 
 Открывайте `lab1/build/docs/html/index.html` для документации и `lab1/build/coverage/report/index.html` для отчёта покрытия с подсветкой строк. При подсчёте покрытия берутся собственные `src/` и `include/`; сторонние библиотеки и код тестов в метрику не входят.
 
-В GitHub Actions проверки запускаются для Pull Request и при попадании изменений в `main`. После успешного прогона на `main` workflow публикует в Releases `lab1-linux-x86_64.tar.gz`, документацию Doxygen и отчёт покрытия. Для запуска скачанного Linux-архива не нужна IDE: распакуйте его командой `tar -xzf lab1-linux-x86_64.tar.gz`, затем запустите `./lab1` из папки распаковки. Для Windows используйте WSL; это не `.exe`.
+В GitHub Actions проверки запускаются для Pull Request и при попадании изменений в `main`. Windows-задача выполняет тесты Catch2 и проверяет запуск `lab1.exe` из PowerShell. После успешных проверок на `main` workflow публикует в Releases `lab1-windows-x86_64.zip`, `lab1-linux-x86_64.tar.gz`, документацию Doxygen и отчёт покрытия. Для запуска Linux-версии распакуйте архив командой `tar -xzf lab1-linux-x86_64.tar.gz` и запустите `./lab1` из папки распаковки.
 
 ## Публикация на GitHub и сдача
 
@@ -69,7 +92,7 @@ git push -u origin main
 git push -u origin feature/lab1-vector-set
 ```
 
-Дайте преподавателю доступ к репозиторию и откройте Pull Request из `feature/lab1-vector-set` в `main`. Если настройки репозитория позволяют, защитите `main`: включите обязательный PR, одобрение и прохождение проверки `check`. Проверьте запуск GitHub Actions, запросите ревью преподавателя и объедините только после его одобрения. После объединения проверьте новый Release и скачиваемый архив.
+Дайте преподавателю доступ к репозиторию и откройте Pull Request из `feature/lab1-vector-set` в `main`. Если настройки репозитория позволяют, защитите `main`: включите обязательный PR, одобрение и прохождение проверок `check` и `windows`. Проверьте запуск GitHub Actions, запросите ревью преподавателя и объедините только после его одобрения. После объединения проверьте новый Release и скачиваемый архив.
 
 ### Что остаётся для защиты
 

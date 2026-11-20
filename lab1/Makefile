@@ -1,6 +1,10 @@
 CXX ?= g++
 GCOV ?= gcov
 BUILD ?= build/default
+ifeq ($(OS),Windows_NT)
+EXEEXT ?= .exe
+endif
+EXEEXT ?=
 CPPFLAGS += -Iinclude
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -Werror
 CATCH_LIBS := $(shell pkg-config --libs catch2-with-main 2>/dev/null)
@@ -11,12 +15,12 @@ TEST_OBJECTS := $(addprefix $(BUILD)/,tests/test_main.o tests/vector_tests.o tes
 OBJECTS := $(LIB_OBJECTS) $(MAIN_OBJECT) $(TEST_OBJECTS)
 
 .PHONY: all test coverage lint docs release clean
-all: $(BUILD)/lab1
+all: $(BUILD)/lab1$(EXEEXT)
 
-$(BUILD)/lab1: $(LIB_OBJECTS) $(MAIN_OBJECT)
+$(BUILD)/lab1$(EXEEXT): $(LIB_OBJECTS) $(MAIN_OBJECT)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-$(BUILD)/lab1-tests: $(LIB_OBJECTS) $(TEST_OBJECTS)
+$(BUILD)/lab1-tests$(EXEEXT): $(LIB_OBJECTS) $(TEST_OBJECTS)
 	$(CXX) $(LDFLAGS) $^ $(CATCH_LIBS) -o $@
 
 $(BUILD)/%.o: %.cpp
@@ -25,14 +29,14 @@ $(BUILD)/%.o: %.cpp
 
 -include $(OBJECTS:.o=.d)
 
-test: $(BUILD)/lab1-tests
+test: $(BUILD)/lab1-tests$(EXEEXT)
 	$<
 
 coverage:
 	mkdir -p build/coverage/report
 	find build/coverage -name '*.gcda' -delete
 	$(MAKE) BUILD=build/coverage CXXFLAGS='$(CXXFLAGS) -O0 -g --coverage' LDFLAGS='--coverage' all test
-	printf '0\n' | build/coverage/lab1 >/dev/null
+	printf '0\n' | build/coverage/lab1$(EXEEXT) >/dev/null
 	gcovr --gcov-executable "$(GCOV)" --root . --filter 'src/|include/' --fail-under-line 90.01 \
 		--txt build/coverage/report/summary.txt --html-details build/coverage/report/index.html build/coverage
 	cat build/coverage/report/summary.txt
