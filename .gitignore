@@ -7,3 +7,4 @@ build/
 *.gcda
 *.gcno
 .DS_Store
+core
