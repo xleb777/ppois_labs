@@ -1,0 +1,12 @@
+build/
+.idea/
+.vscode/
+.vs/
+*.user
+*.suo
+*.exe
+*.obj
+*.gcda
+*.gcno
+.DS_Store
+core
