@@ -1,0 +1,9 @@
+build/
+.idea/
+.vscode/
+.vs/
+*.user
+*.suo
+*.gcda
+*.gcno
+.DS_Store
